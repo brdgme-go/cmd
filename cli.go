@@ -55,11 +55,18 @@ func toGameResponse(game brdgme.Gamer) gameResponse {
 	if winners == nil {
 		winners = []int{}
 	}
+	eliminated := []int{}
+	if eGame, ok := game.(brdgme.Eliminator); ok {
+		if gEliminated := eGame.Eliminated(); gEliminated != nil {
+			eliminated = gEliminated
+		}
+	}
 	return gameResponse{
 		Game:       game,
 		IsFinished: game.IsFinished(),
 		WhoseTurn:  whoseTurn,
 		Winners:    winners,
+		Eliminated: eliminated,
 	}
 }
 

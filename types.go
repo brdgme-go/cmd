@@ -58,6 +58,7 @@ type gameResponse struct {
 	IsFinished bool        `json:"is_finished"`
 	WhoseTurn  []int       `json:"whose_turn"`
 	Winners    []int       `json:"winners"`
+	Eliminated []int       `json:"eliminated"`
 }
 
 type log struct {

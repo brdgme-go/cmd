@@ -46,28 +46,37 @@ func unmarshalGame(game interface{}, into brdgme.Gamer) error {
 	return json.Unmarshal(gameJSON, into)
 }
 
-func toGameResponse(game brdgme.Gamer) gameResponse {
-	whoseTurn := game.WhoseTurn()
-	if whoseTurn == nil {
-		whoseTurn = []int{}
-	}
-	winners := game.Winners()
-	if winners == nil {
-		winners = []int{}
-	}
-	eliminated := []int{}
-	if eGame, ok := game.(brdgme.Eliminator); ok {
-		if gEliminated := eGame.Eliminated(); gEliminated != nil {
-			eliminated = gEliminated
+func toGameResponse(game brdgme.Gamer) (gameResponse, error) {
+	var status gameResponseStatus
+	if game.IsFinished() {
+		winners := game.Winners()
+		if winners == nil {
+			winners = []int{}
+		}
+		status.Finished = &gameResponseStatusFinished{
+			Winners: winners,
+		}
+	} else {
+		whoseTurn := game.WhoseTurn()
+		if whoseTurn == nil {
+			whoseTurn = []int{}
+		}
+		eliminated := []int{}
+		if eGame, ok := game.(brdgme.Eliminator); ok {
+			if gEliminated := eGame.Eliminated(); gEliminated != nil {
+				eliminated = gEliminated
+			}
+		}
+		status.Active = &gameResponseStatusActive{
+			WhoseTurn:  whoseTurn,
+			Eliminated: eliminated,
 		}
 	}
+	gameJSON, err := json.Marshal(game)
 	return gameResponse{
-		Game:       game,
-		IsFinished: game.IsFinished(),
-		WhoseTurn:  whoseTurn,
-		Winners:    winners,
-		Eliminated: eliminated,
-	}
+		State:  string(gameJSON),
+		Status: status,
+	}, err
 }
 
 func toResponseLogs(logs []brdgme.Log) []log {
@@ -90,12 +99,21 @@ func toResponseLogs(logs []brdgme.Log) []log {
 func handleNew(game brdgme.Gamer, request requestNew, out *json.Encoder) {
 	logs, err := game.Start(request.Players)
 	if err == nil {
-		out.Encode(response{
-			New: &responseNew{
-				Game: toGameResponse(game),
-				Logs: toResponseLogs(logs),
-			},
-		})
+		gameResponse, err := toGameResponse(game)
+		if err == nil {
+			out.Encode(response{
+				New: &responseNew{
+					Game: gameResponse,
+					Logs: toResponseLogs(logs),
+				},
+			})
+		} else {
+			out.Encode(response{
+				SystemError: &responseSystemError{
+					Message: fmt.Sprintf("Unable to create game response struct, %s", err),
+				},
+			})
+		}
 	} else {
 		// Most likely due to incorrect player counts.
 		out.Encode(response{
@@ -125,13 +143,22 @@ func handlePlay(game brdgme.Gamer, request requestPlay, out *json.Encoder) {
 		if err != nil || newRemainingCommand == "" || remainingCommand == newRemainingCommand {
 			if commandSucceeded {
 				// Something has already worked, so we'll stay quiet
-				out.Encode(response{
-					Play: &responsePlay{
-						Game:             toGameResponse(game),
-						Logs:             toResponseLogs(logs),
-						RemainingCommand: newRemainingCommand,
-					},
-				})
+				gameResponse, err := toGameResponse(game)
+				if err == nil {
+					out.Encode(response{
+						Play: &responsePlay{
+							Game:             gameResponse,
+							Logs:             toResponseLogs(logs),
+							RemainingCommand: newRemainingCommand,
+						},
+					})
+				} else {
+					out.Encode(response{
+						SystemError: &responseSystemError{
+							Message: fmt.Sprintf("Unable to create game response struct, %s", err),
+						},
+					})
+				}
 			} else if err != nil {
 				// We got an error so lets return it
 				out.Encode(response{

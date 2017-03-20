@@ -54,11 +54,22 @@ type responseSystemError struct {
 }
 
 type gameResponse struct {
-	Game       interface{} `json:"game"`
-	IsFinished bool        `json:"is_finished"`
-	WhoseTurn  []int       `json:"whose_turn"`
-	Winners    []int       `json:"winners"`
-	Eliminated []int       `json:"eliminated"`
+	State  string             `json:"state"`
+	Status gameResponseStatus `json:"status"`
+}
+
+type gameResponseStatus struct {
+	Active   *gameResponseStatusActive   `json:",omitempty"`
+	Finished *gameResponseStatusFinished `json:",omitempty"`
+}
+
+type gameResponseStatusActive struct {
+	WhoseTurn  []int `json:"whose_turn"`
+	Eliminated []int `json:"eliminated"`
+}
+
+type gameResponseStatusFinished struct {
+	Winners []int `json:"winners"`
 }
 
 type log struct {

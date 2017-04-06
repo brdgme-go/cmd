@@ -88,7 +88,7 @@ func toResponseLogs(logs []brdgme.Log) []log {
 		}
 		l[k] = log{
 			Content: v.Message,
-			At:      time.Now().Format(time.RFC3339),
+			At:      time.Now().Format("2006-01-02T15:04:05.999999999"),
 			Public:  v.Public,
 			To:      to,
 		}

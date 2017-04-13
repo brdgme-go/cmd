@@ -136,7 +136,7 @@ func handlePlay(game brdgme.Gamer, request requestPlay, out *json.Encoder) {
 	remainingCommand := strings.TrimSpace(request.Command)
 	commandSucceeded := false
 	for {
-		newLogs, newRemainingCommand, err := game.Command(request.Player, remainingCommand, request.Names)
+		newLogs, canUndo, newRemainingCommand, err := game.Command(request.Player, remainingCommand, request.Names)
 		newRemainingCommand = strings.TrimSpace(newRemainingCommand)
 		commandSucceeded = commandSucceeded || err == nil
 		logs = append(logs, newLogs...)
@@ -149,6 +149,7 @@ func handlePlay(game brdgme.Gamer, request requestPlay, out *json.Encoder) {
 						Play: &responsePlay{
 							Game:             gameResponse,
 							Logs:             toResponseLogs(logs),
+							CanUndo:          canUndo,
 							RemainingCommand: newRemainingCommand,
 						},
 					})

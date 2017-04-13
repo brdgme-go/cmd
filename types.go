@@ -33,6 +33,7 @@ type response struct {
 type responsePlay struct {
 	Game             gameResponse `json:"game"`
 	Logs             []log        `json:"logs"`
+	CanUndo          bool         `json:"can_undo"`
 	RemainingCommand string       `json:"remaining_command"`
 }
 

@@ -1,33 +1,69 @@
 package cmd
 
+import "github.com/brdgme-go/brdgme"
+
 type request struct {
-	New    *requestNew    `json:",omitempty"`
-	Play   *requestPlay   `json:",omitempty"`
-	Render *requestRender `json:",omitempty"`
+	PlayerCounts *requestPlayerCounts `json:",omitempty"`
+	New          *requestNew          `json:",omitempty"`
+	Status       *requestStatus       `json:",omitempty"`
+	Play         *requestPlay         `json:",omitempty"`
+	PubRender    *requestPubRender    `json:",omitempty"`
+	PlayerRender *requestPlayerRender `json:",omitempty"`
+}
+
+type requestPlayerCounts struct {
 }
 
 type requestNew struct {
 	Players int `json:"players"`
 }
 
-type requestPlay struct {
-	Player  int         `json:"player"`
-	Command string      `json:"command"`
-	Names   []string    `json:"names"`
-	Game    interface{} `json:"game"`
+type requestStatus struct {
+	Game string `json:"game"`
 }
 
-type requestRender struct {
-	Player *int        `json:"player"`
-	Game   interface{} `json:"game"`
+type requestPlay struct {
+	Player  int      `json:"player"`
+	Command string   `json:"command"`
+	Names   []string `json:"names"`
+	Game    string   `json:"game"`
+}
+
+type requestPubRender struct {
+	Game string `json:"game"`
+}
+
+type requestPlayerRender struct {
+	Player int    `json:"player"`
+	Game   string `json:"game"`
 }
 
 type response struct {
-	New         *responseNew         `json:",omitempty"`
-	Play        *responsePlay        `json:",omitempty"`
-	Render      *responseRender      `json:",omitempty"`
-	UserError   *responseUserError   `json:",omitempty"`
-	SystemError *responseSystemError `json:",omitempty"`
+	PlayerCounts *responsePlayerCounts `json:",omitempty"`
+	New          *responseNew          `json:",omitempty"`
+	Status       *responseStatus       `json:",omitempty"`
+	Play         *responsePlay         `json:",omitempty"`
+	PubRender    *responseRender       `json:",omitempty"`
+	PlayerRender *responseRender       `json:",omitempty"`
+	UserError    *responseUserError    `json:",omitempty"`
+	SystemError  *responseSystemError  `json:",omitempty"`
+}
+
+type responsePlayerCounts struct {
+	PlayerCounts int `json:"player_counts"`
+}
+
+type responseNew struct {
+	Game          gameResponse `json:"game"`
+	Logs          []log        `json:"logs"`
+	PublicRender  string       `json:"public_render"`
+	PlayerRenders []string     `json:"player_renders"`
+}
+
+type responseStatus struct {
+	Game          gameResponse `json:"game"`
+	PublicRender  string       `json:"public_render"`
+	PlayerRenders []string     `json:"player_renders"`
 }
 
 type responsePlay struct {
@@ -35,15 +71,27 @@ type responsePlay struct {
 	Logs             []log        `json:"logs"`
 	CanUndo          bool         `json:"can_undo"`
 	RemainingCommand string       `json:"remaining_command"`
+	PublicRender     string       `json:"public_render"`
+	PlayerRenders    []string     `json:"player_renders"`
 }
 
-type responseNew struct {
-	Game gameResponse `json:"game"`
-	Logs []log        `json:"logs"`
+type responsePubRender struct {
+	Render pubRender `json:"render"`
 }
 
-type responseRender struct {
-	Render string `json:"render"`
+type pubRender struct {
+	PubState string `json:"pub_state"`
+	Render   string `json:"render"`
+}
+
+type responsePlayerRender struct {
+	Render playerRender `json:"render"`
+}
+
+type playerRender struct {
+	PlayerState string       `json:"player_state"`
+	Render      string       `json:"render"`
+	CommandSpec *brdgme.Spec `json:"command_spec,omitempty"`
 }
 
 type responseUserError struct {
@@ -56,6 +104,7 @@ type responseSystemError struct {
 
 type gameResponse struct {
 	State  string             `json:"state"`
+	Points []float32          `json:"points"`
 	Status gameResponseStatus `json:"status"`
 }
 

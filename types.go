@@ -11,8 +11,7 @@ type request struct {
 	PlayerRender *requestPlayerRender `json:",omitempty"`
 }
 
-type requestPlayerCounts struct {
-}
+type requestPlayerCounts struct{}
 
 type requestNew struct {
 	Players int `json:"players"`
@@ -43,14 +42,14 @@ type response struct {
 	New          *responseNew          `json:",omitempty"`
 	Status       *responseStatus       `json:",omitempty"`
 	Play         *responsePlay         `json:",omitempty"`
-	PubRender    *responseRender       `json:",omitempty"`
-	PlayerRender *responseRender       `json:",omitempty"`
+	PubRender    *responsePubRender    `json:",omitempty"`
+	PlayerRender *responsePlayerRender `json:",omitempty"`
 	UserError    *responseUserError    `json:",omitempty"`
 	SystemError  *responseSystemError  `json:",omitempty"`
 }
 
 type responsePlayerCounts struct {
-	PlayerCounts int `json:"player_counts"`
+	PlayerCounts []int `json:"player_counts"`
 }
 
 type responseNew struct {
@@ -103,23 +102,9 @@ type responseSystemError struct {
 }
 
 type gameResponse struct {
-	State  string             `json:"state"`
-	Points []float32          `json:"points"`
-	Status gameResponseStatus `json:"status"`
-}
-
-type gameResponseStatus struct {
-	Active   *gameResponseStatusActive   `json:",omitempty"`
-	Finished *gameResponseStatusFinished `json:",omitempty"`
-}
-
-type gameResponseStatusActive struct {
-	WhoseTurn  []int `json:"whose_turn"`
-	Eliminated []int `json:"eliminated"`
-}
-
-type gameResponseStatusFinished struct {
-	Winners []int `json:"winners"`
+	State  string        `json:"state"`
+	Points []float32     `json:"points"`
+	Status brdgme.Status `json:"status"`
 }
 
 type log struct {

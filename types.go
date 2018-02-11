@@ -53,25 +53,25 @@ type responsePlayerCounts struct {
 }
 
 type responseNew struct {
-	Game          gameResponse `json:"game"`
-	Logs          []log        `json:"logs"`
-	PublicRender  string       `json:"public_render"`
-	PlayerRenders []string     `json:"player_renders"`
+	Game          gameResponse   `json:"game"`
+	Logs          []log          `json:"logs"`
+	PublicRender  pubRender      `json:"public_render"`
+	PlayerRenders []playerRender `json:"player_renders"`
 }
 
 type responseStatus struct {
-	Game          gameResponse `json:"game"`
-	PublicRender  string       `json:"public_render"`
-	PlayerRenders []string     `json:"player_renders"`
+	Game          gameResponse   `json:"game"`
+	PublicRender  pubRender      `json:"public_render"`
+	PlayerRenders []playerRender `json:"player_renders"`
 }
 
 type responsePlay struct {
-	Game             gameResponse `json:"game"`
-	Logs             []log        `json:"logs"`
-	CanUndo          bool         `json:"can_undo"`
-	RemainingCommand string       `json:"remaining_command"`
-	PublicRender     string       `json:"public_render"`
-	PlayerRenders    []string     `json:"player_renders"`
+	Game           gameResponse   `json:"game"`
+	Logs           []log          `json:"logs"`
+	CanUndo        bool           `json:"can_undo"`
+	RemainingInput string         `json:"remaining_input"`
+	PublicRender   pubRender      `json:"public_render"`
+	PlayerRenders  []playerRender `json:"player_renders"`
 }
 
 type responsePubRender struct {

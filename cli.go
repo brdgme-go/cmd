@@ -90,20 +90,31 @@ func handleNew(game brdgme.Gamer, request requestNew, out *json.Encoder) {
 	logs, err := game.New(request.Players)
 	if err == nil {
 		gameResponse, err := toGameResponse(game)
-		if err == nil {
-			out.Encode(response{
-				New: &responseNew{
-					Game: gameResponse,
-					Logs: toResponseLogs(logs),
-				},
-			})
-		} else {
+		if err != nil {
 			out.Encode(response{
 				SystemError: &responseSystemError{
 					Message: fmt.Sprintf("Unable to create game response struct, %s", err),
 				},
 			})
+			return
 		}
+		pubRender, playerRenders, err := renders(game)
+		if err != nil {
+			out.Encode(response{
+				SystemError: &responseSystemError{
+					Message: fmt.Sprintf("Unable to get renders, %s", err),
+				},
+			})
+			return
+		}
+		out.Encode(response{
+			New: &responseNew{
+				Game:          gameResponse,
+				Logs:          toResponseLogs(logs),
+				PublicRender:  pubRender,
+				PlayerRenders: playerRenders,
+			},
+		})
 	} else {
 		// Most likely due to incorrect player counts.
 		out.Encode(response{
@@ -132,15 +143,20 @@ func handleStatus(game brdgme.Gamer, request requestStatus, out *json.Encoder) {
 		})
 		return
 	}
-	playerRs := []string{}
-	for i, pc := 0, game.PlayerCount(); i < pc; i++ {
-		playerRs = append(playerRs, game.PlayerRender(i))
+	pubRender, playerRenders, err := renders(game)
+	if err != nil {
+		out.Encode(response{
+			SystemError: &responseSystemError{
+				Message: fmt.Sprintf("Unable to get renders, %s", err),
+			},
+		})
+		return
 	}
 	out.Encode(response{
 		Status: &responseStatus{
 			Game:          gameResp,
-			PublicRender:  game.PubRender(),
-			PlayerRenders: playerRs,
+			PublicRender:  pubRender,
+			PlayerRenders: playerRenders,
 		},
 	})
 }
@@ -165,22 +181,33 @@ func handlePlay(game brdgme.Gamer, request requestPlay, out *json.Encoder) {
 			if commandSucceeded {
 				// Something has already worked, so we'll stay quiet
 				gameResponse, err := toGameResponse(game)
-				if err == nil {
-					out.Encode(response{
-						Play: &responsePlay{
-							Game:             gameResponse,
-							Logs:             toResponseLogs(logs),
-							CanUndo:          commandResponse.CanUndo,
-							RemainingCommand: newRemainingCommand,
-						},
-					})
-				} else {
+				if err != nil {
 					out.Encode(response{
 						SystemError: &responseSystemError{
 							Message: fmt.Sprintf("Unable to create game response struct, %s", err),
 						},
 					})
+					return
 				}
+				pubRender, playerRenders, err := renders(game)
+				if err != nil {
+					out.Encode(response{
+						SystemError: &responseSystemError{
+							Message: fmt.Sprintf("Unable to get renders, %s", err),
+						},
+					})
+					return
+				}
+				out.Encode(response{
+					Play: &responsePlay{
+						Game:           gameResponse,
+						Logs:           toResponseLogs(logs),
+						CanUndo:        commandResponse.CanUndo,
+						RemainingInput: newRemainingCommand,
+						PublicRender:   pubRender,
+						PlayerRenders:  playerRenders,
+					},
+				})
 			} else if err != nil {
 				// We got an error so lets return it
 				out.Encode(response{
@@ -246,6 +273,7 @@ func toPlayerRender(game brdgme.Gamer, player int) (playerRender, error) {
 	return playerRender{
 		PlayerState: string(playerState),
 		Render:      game.PlayerRender(player),
+		CommandSpec: game.CommandSpec(player),
 	}, nil
 }
 
@@ -272,4 +300,20 @@ func handlePlayerRender(game brdgme.Gamer, request requestPlayerRender, out *jso
 			Render: pr,
 		},
 	})
+}
+
+func renders(game brdgme.Gamer) (pubRender, []playerRender, error) {
+	pubRender, err := toPubRender(game)
+	if err != nil {
+		return pubRender, nil, err
+	}
+	playerCount := game.PlayerCount()
+	playerRenders := make([]playerRender, playerCount)
+	for p := 0; p < playerCount; p++ {
+		playerRenders[p], err = toPlayerRender(game, p)
+		if err != nil {
+			return pubRender, nil, err
+		}
+	}
+	return pubRender, playerRenders, nil
 }

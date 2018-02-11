@@ -50,9 +50,14 @@ func unmarshalGame(game string, into brdgme.Gamer) error {
 
 func toGameResponse(game brdgme.Gamer) (gameResponse, error) {
 	gameJSON, err := json.Marshal(game)
+	points := game.Points()
+	if points == nil {
+		points = []float32{}
+	}
 	return gameResponse{
 		State:  string(gameJSON),
 		Status: game.Status(),
+		Points: points,
 	}, err
 }
 

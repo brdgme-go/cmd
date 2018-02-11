@@ -44,12 +44,8 @@ func Cli(game brdgme.Gamer, in io.Reader, out io.Writer) {
 	}
 }
 
-func unmarshalGame(game interface{}, into brdgme.Gamer) error {
-	gameJSON, err := json.Marshal(game)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(gameJSON, into)
+func unmarshalGame(game string, into brdgme.Gamer) error {
+	return json.Unmarshal([]byte(game), into)
 }
 
 func toGameResponse(game brdgme.Gamer) (gameResponse, error) {

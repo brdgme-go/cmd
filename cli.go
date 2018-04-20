@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,17 +11,27 @@ import (
 	"github.com/brdgme-go/brdgme"
 )
 
+const PlayerCountsRequest = "\"PlayerCounts\""
+
 // Cli creates a CLI interface to a game.
 func Cli(game brdgme.Gamer, in io.Reader, out io.Writer) {
 	var request request
-	decoder := json.NewDecoder(in)
 	encoder := json.NewEncoder(out)
-	if err := decoder.Decode(&request); err != nil {
-		encoder.Encode(response{
-			SystemError: &responseSystemError{
-				Message: fmt.Sprintf("Unable to decode request: %v", err),
-			}})
-		return
+
+	// Custom handler for PlayerCounts because it's a string
+	bufIn := bufio.NewReader(in)
+	peeked, err := bufIn.Peek(len(PlayerCountsRequest))
+	if err == nil && string(peeked) == PlayerCountsRequest {
+		request.PlayerCounts = &requestPlayerCounts{}
+	} else {
+		decoder := json.NewDecoder(bufIn)
+		if err := decoder.Decode(&request); err != nil {
+			encoder.Encode(response{
+				SystemError: &responseSystemError{
+					Message: fmt.Sprintf("Unable to decode request: %v", err),
+				}})
+			return
+		}
 	}
 	switch {
 	case request.PlayerCounts != nil:
